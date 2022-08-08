@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			#intro{
+				width:1000px;
+				height:550px;
+				background-image:url("./gameImagesMaster/background.png");
+				background-size:cover;
+			}
+			h2{
+				text-align:center;
+				color:White;
+				padding-top:20px;
+				padding-bottom:20px;
+				font-size:80px;
+				border-bottom: 3px double;
+			}
+			button{
+				background-color:white;
+				color:black;
+				width:300px;
+				height:90px;
+				border-radius:10px;
+			}
+			button:hover{
+				background-color:#CCCCCC;
+				color:#333333;
+			}
+			#controls{
+				text-align:center;
+			}
+			#score{
+				text-align:center;
+				color:red;
+			}
+			img{
+				width:200px;
+				height:200px;
+				padding-top: 20px;
+			}
+			#orangejustice{
+				margin-left: 240px;
+			}
+			#dabbing{
+				margin-left: 120px;
+			}
+		</style>
+	</head>
+	<body onload='showScore()'>
+		<div id='intro'>
+			<h2>#1 VICTORY ROYAL!!!</h2>
+			<h4 id='score'></h4>
+			<div id='controls'>
+				<button onclick='play()'>PLAY AGAIN</button>
+				<button onclick='quitGame()'>MAIN MENU</button>
+			</div>
+			<div id='images'>
+				<img src="./gameImagesMaster/orangejustice.gif" id="orangejustice">
+                <img src="./gameImagesMaster/dabbing.gif" id="dabbing">
+            </div>
+		</div>
+		<script>
+			function play(){
+				location.href='game.html';
+			}
+			function quitGame(){
+				location.href='index.html';
+				//window.close() will not work here because this script did not
+				//open the window
+			}
+			// function showScore(){
+			// 	var url=""+window.location;
+			// 	if(url.indexOf("score")!=-1){
+			// 		score=parseInt(url.substring(url.indexOf("score")+6));
+			// 		document.getElementById("score").innerHTML="Score: "+score;
+			// 	}
+			// }
+		</script>
+	</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			#intro{
+				width:532px;
+				height:700px;
+				background-image:url("./gameImagesMaster/notebook.png");
+				background-size:cover;
+			}
+			h2{
+				text-align:left;
+				color:black;
+				padding-top:68px;
+				padding-left:190px;
+				font-family:cursive;
+			}
+			button{
+				background-color:rgb(71, 219, 91);
+				color:black;
+				width:100px;
+				height:30px;
+				border-radius:10px;
+			}
+			button:hover{
+				background-color:#CCCCCC;
+				color:#333333;
+			}
+			#controls{
+				text-align:left;
+				padding-top:40px;
+				padding-left:250px;
+			}
+			#score{
+				text-align:center;
+				color:red;
+			}
+			#rulelist{
+				color:black;
+				font-size: 19px;
+				font-family:cursive;
+			}
+			span{
+				display:inline-block
+			}
+			#rule1{
+				padding-top:10px;
+				margin-left:105px;
+			}
+			#rule2{
+				padding-top:4px;
+				margin-left:112px;
+			}
+			#rule3{
+				padding-top:4px;
+				margin-left:118px;
+			}
+			#rule4{
+				padding-top:4px;
+				margin-left:125px;
+			}
+			#rule5{
+				padding-top:4px;
+				margin-left:131px;
+			}
+			#rule6{
+				padding-top:4px;
+				margin-left:138px;
+			}
+			#rule7{
+				padding-top:4px;
+				margin-left:144px;
+			}
+			#rule8{
+				padding-top:4px;
+				margin-left:151px;
+			}
+			#rule9{
+				padding-top:4px;
+				margin-left:158px;
+			}
+			#rule10{
+				padding-top:4px;
+				margin-left:165px;
+			}
+			#rule11{
+				padding-top:4px;
+				margin-left:172px;
+			}
+			#rule12{
+				padding-top:4px;
+				margin-left:179px;
+			}
+		</style>
+	</head>
+	<!--    <body onload='showRules()'>    -->
+	<body>
+		<div id='intro'>
+			<h2>RULES</h2>
+			<div id='rulelist'>
+				<span id='rule1'>1) Move with the arrow keys</span>
+				<span id='rule2'>2) Dash with w/a/s/d</span>
+				<span id='rule3'>3) Player can dash through enemies</span>
+				<span id='rule4'>4) Avoid enemy projectiles</span>
+				<span id='rule5'>5) Collect 5 coins to go to next level</span>
+				<span id='rule6'>6) Getting hit changes player's speed</span>
+				<span id='rule7'>7) Getting hit 3 times = death</span>
+				<span id='rule8'>8) Collect hearts to restore health</span>
+				<span id='rule9'>9) Beware of special enemy types</span>
+				<span id='rule10'>10) Survive 8 levels to fight boss</span>
+				<span id='rule11'>11) The boss fight is hard...</span>
+				<span id='rule12'>12) You won't win...</span>
+			</div>
+			<div id='controls'>
+				<button onclick='back()'><---</button>
+			</div>
+		</div>
+		<script>
+			function back(){
+				location.href='index.html';
+			}
+			function showRules()
+			{
+				var canvas, ctx;
+				canvas=document.getElementById('rules');
+				ctx=canvas.getContext('2d');
+				var background = new Image();
+				background.src = "gameImagesMaster/background.png";
+				ctx.drawImage(background, 0, 0);
+				ctx.fillStyle="white";
+				ctx.beginPath();
+					ctx.font="80px Arial";
+					ctx.fillText("Beat Level 7 To Win",150,150);
+				ctx.closePath();
+				ctx.beginPath();
+					ctx.font="30px Arial";
+					ctx.fillText("-Collect 5 gold coins to pass each level",210,190);
+					ctx.fillText("-Also, make sure to avoid the enemy projectiles",210,230);
+					ctx.fillText("-If you get hit once, you will become angry and your",210,270);
+					ctx.fillText("speed will be doubled",250,310);
+					ctx.fillText("-If you get hit again, you will become tired and your",210,350);
+					ctx.fillText("speed will be halved",250,390);
+					ctx.fillText("-Move with the arrow keys, and dash with w/a/s/d",210,430);
+					ctx.fillText("-Good Luck!",210,470);
+				ctx.fill();
+			}	
+		</script>
+		<canvas id='rules' width='1000px' height='550px'></canvas>
+	</body>
+</html>

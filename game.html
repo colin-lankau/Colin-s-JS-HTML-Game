@@ -1,0 +1,2038 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src='./gameScriptsMaster/Coin.js'></script>
+		<script src='./gameScriptsMaster/Enemy.js'></script>
+		<script src='./gameScriptsMaster/Bouncer.js'></script>
+		<script src='./gameScriptsMaster/Splitter.js'></script>
+		<script src='./gameScriptsMaster/Heart.js'></script>
+		<script src='howler.js-master/dist/howler.js'></script>
+		<script>
+			var canvas, ctx;
+			var timing;
+			//background vars
+			var background = new Image();
+			background.src = "./gameImagesMaster/background.png";
+			//player vars
+			var player = new Image();
+			player.src = "./gameImagesMaster/playerSprites.png";
+			var playerX, playerY;
+			var playerFrameW, playerFrameH;
+			var playerFrameX, playerFrameY;
+			var playerSpeed;
+			var playerDash;
+			var playerIFrames;
+			//coin vars
+			var coin = new Image();
+			coin.src = "./gameImagesMaster/coinSprites.png";
+			var coins;
+			//enemy vars
+			var enemy = new Image();
+			enemy.src = "./gameImagesMaster/stars.png";
+			var tracker = new Image();
+			tracker.src = "./gameImagesMaster/trackers.png";
+			var hoarde = new Image();
+			hoarde.src = "./gameImagesMaster/hoarde.png";
+			var bouncer = new Image();
+			bouncer.src = "./gameImagesMaster/bouncers.png";
+			var splitter = new Image();
+			splitter.src = "./gameImagesMaster/splitters.png";
+			var invertedsplitter = new Image();
+			invertedsplitter.src = "./gameImagesMaster/invertedsplitters.png";
+			var randomnum3;
+			var randomnum4;
+			var enemies;
+			var bouncers;
+			var splitters;
+			var dir;
+			var randomnum;
+			//heart vars
+			var heart = new Image();
+			heart.src = "./gameImagesMaster/hearts.png";
+			var hearts;
+			var heartdir;
+			var randomnum2;
+			//key vars
+			var leftKey, rightKey, downKey, upKey;
+			var aKey, dKey, sKey, wKey;
+			//level vars
+			var level1, level2, level3, level4, level5, level6, level7, level8, end;
+			var bossfight, bosslevel, bosswave, bosstiming, yesno, spawnlocation, wheretospawn;
+			var coincount;
+			var score;
+			//sound vars
+			var music;
+			var musicStarted;
+			var announcers;
+			//locking at 60 fps
+			var fps;
+			// var now;
+			// var then;
+			// var interval;;
+			// var delta;
+			function initialize()
+			{
+				canvas=document.getElementById('project3');
+				ctx=canvas.getContext('2d');
+				timing=0;
+				score=100;
+				//locking fps vars
+				fps = 60;
+				// then = Date.now();
+				// interval = 1000/fps;
+				//player vars
+				playerX = canvas.width/2;
+				playerY = canvas.height/2;
+				playerFrameW = 86;
+				playerFrameH = 85;
+				playerFrameX = 0;
+				playerFrameY = 0;
+				playerSpeed = 2;
+				playerDash=0;
+				playerIFrames=120;
+				//coin vars
+				coins = [];
+				//enemy vars
+				enemies = [];
+				bouncers = [];
+				splitters = [];
+				randomnum3 = 0;
+				randomnum4 = 0;
+				dir = 1;
+				randomnum=0;
+				//heart vars
+				hearts = [];
+				dir = 1;
+				randomnum2 = 0;
+				//key vars
+				leftKey = false;
+				rightKey = false;
+				downKey = false;
+				upKey = false;
+				wKey = false;
+				sKey = false;
+				dKey = false;
+				aKey = false;
+				document.addEventListener("keydown", keyDownHandler);
+				document.addEventListener("keyup", keyUpHandler);
+				//level vars
+				level1=true;
+				level2=false;
+				level3=false;
+				level4=false;
+				level5=false;
+				level6=false;
+				level7=false;
+				level8=false;
+				end=false;
+				bossfight=false;
+				bosslevel=0;
+				bosswave=false;
+				bosstiming=0;
+				wheretospawn="";
+				spawnlocation="";
+				yesno=1;
+				coincount=0;
+				//sound vars
+				musicStarted=false;
+				music = {
+					levelmusic: new Howl({
+						src: './gameSoundsMaster/levelmusic.mp3',
+						loop: true,
+						volume: .20
+					}),
+					bossmusic: new Howl({
+						src: './gameSoundsMaster/bossmusic.mp3',
+						loop: true,
+						volume: .15
+					})
+				}
+				announcers = {
+					hunted: new Howl({
+						src: './gameSoundsMaster/hunted.mp3',
+						volume: .4
+					}),
+					surrounded: new Howl({
+						src: './gameSoundsMaster/surrounded.mp3',
+						volume: .4
+					}),
+					bluerayed: new Howl({
+						src: './gameSoundsMaster/bluerayed.mp3',
+						volume: .4
+					}),
+					fractured: new Howl({
+						src: './gameSoundsMaster/fractured.mp3',
+						volume: .4
+					}),
+					labyrinth: new Howl({
+						src: './gameSoundsMaster/labyrinth.mp3',
+						volume: .4
+					}),
+					dissected: new Howl({
+						src: './gameSoundsMaster/dissected.mp3',
+						volume: .4
+					}),
+					imprisoned: new Howl({
+						src: './gameSoundsMaster/imprisoned.mp3',
+						volume: .4
+					})
+				}
+				setTimeout(draw, 1000/fps)
+				update();
+			}
+			function update()
+			{
+				//bg sound start
+				if((wKey || sKey || aKey || dKey || upKey || downKey || leftKey || rightKey) && !musicStarted)
+				{
+					music.levelmusic.play();
+					musicStarted=true;
+				}
+				timing++;
+				playerDash++;
+				if(playerIFrames<120)
+					playerIFrames++;
+				//player states
+				if(playerFrameY==0)
+				{
+					playerSpeed=4;
+					for(var x=0; x<hearts.length; x++)
+					{
+						hearts.splice(x,1);
+					}
+				}
+				if(playerFrameY==1)
+					playerSpeed=5;
+				if(playerFrameY==2)
+					playerSpeed=3;
+				if(playerFrameY==3)
+				{
+					end = true;
+					// for(var x=0; x<hearts.length; x++)
+					// {
+					// 	hearts.splice(x,1);
+					// }
+				}
+				//player movement
+				if(downKey)
+				{
+					if(playerY<500)
+						playerY+=playerSpeed;
+				}
+				if(leftKey)
+				{
+					if(playerX>0)
+						playerX-=playerSpeed;
+				}
+				if(rightKey)
+				{
+					if(playerX<950)
+						playerX+=playerSpeed;
+				}
+				if(upKey)
+				{
+					if(playerY>0)
+						playerY-=playerSpeed;
+				}
+				if(sKey&&(playerDash>60))
+				{
+					if(playerY<300)
+					{
+						playerY+=200;
+						playerDash=0;
+					}
+					else
+					{
+						playerY = canvas.height-50;
+						playerDash=0;
+					}
+				}
+				if(aKey&&(playerDash>60))
+				{
+					if(playerX>200)
+					{
+						playerX-=200;
+						playerDash=0;
+					}
+					else
+					{
+						playerX = 0;
+						playerDash=0;
+					}
+				}
+				if(dKey&&(playerDash>60))
+				{
+					if(playerX<750)
+					{
+						playerX+=200;
+						playerDash=0;
+					}
+					else
+					{
+						playerX = canvas.width-50;
+						playerDash=0;
+					}
+				}
+				if(wKey&&(playerDash>60))
+				{
+					if(playerY>200)
+					{
+						playerY-=200;
+						playerDash=0;
+					}
+					else
+					{
+						playerY = 0;
+						playerDash=0;
+					}
+				}
+				//animation of player
+				if(timing%45==0)
+				{
+					playerFrameX++;
+					if(playerFrameX>1)
+						playerFrameX=0;
+				}
+				//animation of coins
+				for(var x=0; x<coins.length; x++)
+				{
+					coins[x].animate(timing);
+					if(playerX<=coins[x].x+coins[x].frameW &&
+					   playerX+50>=coins[x].x &&
+					   playerY<=coins[x].y+coins[x].frameH &&
+					   playerY+50>=coins[x].y)
+					   {
+							coins.splice(x, 1);
+					   }
+				}
+				//enemies- enemy, tracker, hoarde
+				if(playerIFrames>=120)
+				{
+					for(var x=0; x<enemies.length; x++)
+					{
+						if(playerX<=enemies[x].x+enemies[x].frameW &&
+						playerX+50>=enemies[x].x &&
+						playerY<=enemies[x].y+enemies[x].frameH &&
+						playerY+50>=enemies[x].y)
+						{
+								enemies.splice(x, 1);
+								playerFrameY++;
+								playerIFrames=0;
+						}
+					}
+				}
+				for(var x=0; x<enemies.length; x++)
+				{
+					enemies[x].animate(timing);
+					enemies[x].move();
+				}
+				for(var x=0; x<enemies.length; x++)
+				{
+					if((enemies[x].y>canvas.height)||(enemies[x].y<-150))
+					{
+						enemies.splice(x,1);
+					}
+				}
+				for(var x=0; x<enemies.length; x++)
+				{
+					if((enemies[x].x>canvas.width)||(enemies[x].x<-150))
+					{
+						enemies.splice(x,1);
+					}
+				}
+				//bouncer enemies
+				if(playerIFrames>=120)
+				{
+					for(var x=0; x<bouncers.length; x++)
+					{
+						if(playerX<=bouncers[x].x+bouncers[x].frameW &&
+						playerX+50>=bouncers[x].x &&
+						playerY<=bouncers[x].y+bouncers[x].frameH &&
+						playerY+50>=bouncers[x].y)
+						{
+								bouncers.splice(x, 1);
+								playerFrameY++;
+								playerIFrames=0;
+						}
+					}
+				}
+				for(var x=0; x<bouncers.length; x++)
+				{
+					bouncers[x].animate(timing);
+					bouncers[x].move();
+				}
+				for(var x=0; x<bouncers.length; x++)
+				{
+					if((bouncers[x].y>canvas.height)||(bouncers[x].y<-150))
+					{
+						bouncers.splice(x,1);
+					}
+				}
+				for(var x=0; x<bouncers.length; x++)
+				{
+					if((bouncers[x].x>canvas.width)||(bouncers[x].x<-150))
+					{
+						bouncers.splice(x,1);
+					}
+				}
+				//splitter enemies
+				if(playerIFrames>=120)
+				{
+					for(var x=0; x<splitters.length; x++)
+					{
+						if(playerX<=splitters[x].x+splitters[x].frameW &&
+						playerX+50>=splitters[x].x &&
+						playerY<=splitters[x].y+splitters[x].frameH &&
+						playerY+50>=splitters[x].y)
+						{
+								splitters.splice(x, 1);
+								playerFrameY++;
+								playerIFrames=0;
+						}
+					}
+				}
+				for(var x=0; x<splitters.length; x++)
+				{
+					splitters[x].animate(timing);
+					if(splitters[x].numsplits==1)
+					{
+						splitters[x].delay++;
+						if(splitters[x].delay==1)
+							splitters[x].img = invertedsplitter;
+						if(splitters[x].delay>90)
+						{
+							splitters[x].img = invertedsplitter;
+						}
+					}
+					if(splitters[x].delay==0 || splitters[x].delay>90)
+						splitters[x].move();
+				}
+				for(var x=0; x<splitters.length; x++)
+				{
+					if((splitters[x].y>canvas.height)||(splitters[x].y<-150))
+					{
+						splitters.splice(x,1);
+					}
+				}
+				//hearts
+				if(playerFrameY>0)
+				{
+					if(timing%60==0)
+					{
+						randomnum2 = Math.floor(Math.random(0,1)*12);
+						if(randomnum2==0)
+						{
+							dir=1;
+							hearts.push(new Heart(heart, -50, parseInt(Math.random()*(canvas.height-48)), 0, 236, 222, dir));
+						}
+						if(randomnum2==1)
+						{
+							dir=-1;
+							hearts.push(new Heart(heart, 1000, parseInt(Math.random()*(canvas.height-48)), 0, 236, 222, dir));
+						}
+					}
+					for(var x=0; x<hearts.length; x++)
+					{
+						hearts[x].animate(timing);
+						hearts[x].move();
+						if(playerX<=hearts[x].x+50 &&
+							playerX+50>=hearts[x].x &&
+							playerY<=hearts[x].y+48 &&
+							playerY+50>=hearts[x].y)
+							{
+								hearts.splice(x, 1);
+								playerFrameY--;
+							}
+					}
+					for(var x=0; x<hearts.length; x++)
+					{
+						if((hearts[x].x>canvas.width)||(hearts[x].x<-100))
+						{
+							hearts.splice(x,1);
+						}
+					}
+				}
+				//levels
+				//level1
+				if(level1)
+				{
+					if((coincount<5)&&(timing%60==0))
+					{
+						coincount++;
+						coins.push(new Coin(coin, parseInt(Math.random()*(canvas.width-42)), parseInt(Math.random()*(canvas.height-42)), 0, 42, 42));
+					}
+					if(timing%90==0)
+					{
+						randomnum = Math.floor(Math.random(0,1)*2);
+						if(randomnum==0)
+						{
+							dir=1;
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), -100, 0, 100, 100, 3, dir, true));
+						}
+						if(randomnum==1)
+						{
+							dir=-1;
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), 550, 0, 100, 100, 3, dir, true));
+						}
+					}
+				}
+				if((coincount==5)&&(coins.length==0))
+				{
+					level1=false;
+					level2=true;
+				}
+				//level2
+				if(level2)
+				{
+					if((coincount<10)&&(timing%60==0))
+					{
+						coincount++;
+						coins.push(new Coin(coin, parseInt(Math.random()*(canvas.width-42)), parseInt(Math.random()*(canvas.height-42)), 0, 42, 42));
+					}
+					if(timing%50==0)
+					{
+						randomnum = Math.floor(Math.random(0,1)*2);
+						if(randomnum==0)
+						{
+							dir=1;
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), -100, 0, 100, 100, 4, dir, true));
+						}
+						if(randomnum==1)
+						{
+							dir=-1;
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), 550, 0, 100, 100, 4, dir, true));
+						}
+					}
+				}
+				if((coincount==10)&&(coins.length==0))
+				{
+					level2=false;
+					level3=true;
+				}
+				//level3
+				if(level3)
+				{
+					if((coincount<15)&&(timing%60==0))
+					{
+						coincount++;
+						coins.push(new Coin(coin, parseInt(Math.random()*(canvas.width-42)), parseInt(Math.random()*(canvas.height-42)), 0, 42, 42));
+					}
+					if(timing%80==0)
+					{
+						randomnum = Math.floor(Math.random(0,1)*2);
+						if(randomnum==0)
+						{
+							dir=1;
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), -100, 0, 100, 100, 3, dir, true));
+						}
+						if(randomnum==1)
+						{
+							dir=-1;
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), 550, 0, 100, 100, 3, dir, true));
+						}
+						randomnum = Math.floor(Math.random(0,1)*2);
+						if(randomnum==0)
+						{
+							dir=1;
+							enemies.push(new Enemy(tracker, playerX-25, -100, 0, 100, 100, 2, dir, true));
+						}
+						if(randomnum==1)
+						{
+							dir=-1;
+							enemies.push(new Enemy(tracker, playerX-25, 550, 0, 100, 100, 2, dir, true));
+						}
+					}
+				}
+				if((coincount==15)&&(coins.length==0))
+				{
+					level3=false;
+					level4=true;
+				}
+				//level4
+				if(level4)
+				{
+					if((coincount<20)&&(timing%75==0))
+					{
+						coincount++;
+						coins.push(new Coin(coin, parseInt(Math.random()*(canvas.width-42)), parseInt(Math.random()*(canvas.height-42)), 0, 42, 42));
+					}
+					if(timing%55==0)
+					{
+						randomnum = Math.floor(Math.random(0,1)*2);
+						if(randomnum==0)
+						{
+							dir=1;
+							enemies.push(new Enemy(tracker, playerX-25, -100, 0, 100, 100, 5, dir, true));
+						}
+						if(randomnum==1)
+						{
+							dir=-1;
+							enemies.push(new Enemy(tracker, playerX-25, 550, 0, 100, 100, 5, dir, true));
+						}
+					}
+				}
+				if((coincount==20)&&(coins.length==0))
+				{
+					level4=false;
+					level5=true;
+				}
+				//level5
+				if(level5)
+				{
+					if((coincount<25)&&(timing%75==0)&&!end)
+					{
+						coincount++;
+						coins.push(new Coin(coin, parseInt(Math.random()*(canvas.width-42)), parseInt(Math.random()*(canvas.height-42)), 0, 42, 42));
+					}
+					if(timing%75==0)
+					{
+						randomnum = Math.floor(Math.random(0,1)*2);
+						if(randomnum==0)
+						{
+							dir=1;
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), -100, 0, 100, 100, 4, dir, true));
+						}
+						if(randomnum==1)
+						{
+							dir=-1;
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), 550, 0, 100, 100, 4, dir, true));
+						}
+						randomnum = Math.floor(Math.random(0,1)*2);
+						if(randomnum==0)
+						{
+							dir=1;
+							enemies.push(new Enemy(tracker, playerX-25, -100, 0, 100, 100, 3, dir, true));
+						}
+						if(randomnum==1)
+						{
+							dir=-1;
+							enemies.push(new Enemy(tracker, playerX-25, 550, 0, 100, 100, 3, dir, true));
+						}
+					}
+				}
+				if((coincount==25)&&(coins.length==0))
+				{
+					level5=false;
+					level6=true;
+				}
+				//level6
+				if(level6)
+				{
+					if((coincount<30)&&(timing%90==0)&&!end)
+					{
+						coincount++;
+						coins.push(new Coin(coin, parseInt(Math.random()*(canvas.width-42)), parseInt(Math.random()*(canvas.height-42)), 0, 42, 42));
+					}
+					if(timing%180==0)
+					{
+						randomnum = Math.floor(Math.random(0,1)*2);
+						if(randomnum==0)
+						{
+							dir=1;
+							randomnum3 = Math.floor(Math.random(0,1)*300);
+							enemies.push(new Enemy(hoarde, randomnum3, -100, 0, 100, 100, 4, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 100, -100, 0, 100, 100, 4, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 200, -100, 0, 100, 100, 4, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 300, -100, 0, 100, 100, 4, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 400, -100, 0, 100, 100, 4, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 500, -100, 0, 100, 100, 4, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 600, -100, 0, 100, 100, 4, dir, true));
+						}
+						if(randomnum==1)
+						{
+							dir=-1;
+							randomnum3 = Math.floor(Math.random(0,1)*300);
+							enemies.push(new Enemy(hoarde, randomnum3, 550, 0, 100, 100, 4, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 100, 550, 0, 100, 100, 4, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 200, 550, 0, 100, 100, 4, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 300, 550, 0, 100, 100, 4, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 400, 550, 0, 100, 100, 4, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 500, 550, 0, 100, 100, 4, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 600, 550, 0, 100, 100, 4, dir, true));
+						}
+					}
+				}
+				if((coincount==30)&&(coins.length==0))
+				{
+					level6=false;
+					level7=true;
+				}
+				//level7
+				if(level7)
+				{
+					if((coincount<35)&&(timing%100==0)&&!end)
+					{
+						coincount++;
+						coins.push(new Coin(coin, parseInt(Math.random()*(canvas.width-42)), parseInt(Math.random()*(canvas.height-42)), 0, 42, 42));
+					}
+					if(timing%300==0)
+					{
+						randomnum = Math.floor(Math.random(0,1)*2);
+						if(randomnum==0)
+						{
+							dir=1;
+							randomnum3 = Math.floor(Math.random(0,1)*500);
+							enemies.push(new Enemy(hoarde, randomnum3, -100, 0, 100, 100, 3, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 100, -100, 0, 100, 100, 3, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 200, -100, 0, 100, 100, 3, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 300, -100, 0, 100, 100, 3, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 400, -100, 0, 100, 100, 3, dir, true));
+						}
+						if(randomnum==1)
+						{
+							dir=-1;
+							randomnum3 = Math.floor(Math.random(0,1)*500);
+							enemies.push(new Enemy(hoarde, randomnum3, 550, 0, 100, 100, 3, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 100, 550, 0, 100, 100, 3, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 200, 550, 0, 100, 100, 3, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 300, 550, 0, 100, 100, 3, dir, true));
+							enemies.push(new Enemy(hoarde, randomnum3 + 400, 550, 0, 100, 100, 3, dir, true));
+						}
+					}
+					if(timing%220==0)
+					{
+						randomnum = Math.floor(Math.random(0,1)*2);
+						if(randomnum==0)
+						{
+							dir=1;
+							enemies.push(new Enemy(tracker, playerX-25, -100, 0, 100, 100, 4, dir, true));
+						}
+						if(randomnum==1)
+						{
+							dir=-1;
+							enemies.push(new Enemy(tracker, playerX-25, 550, 0, 100, 100, 4, dir, true));
+						}
+					}
+					if(timing%160==0)
+					{
+						randomnum = Math.floor(Math.random(0,1)*2);
+						if(randomnum==0)
+						{
+							dir=1;
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), -100, 0, 100, 100, 2, dir, true));
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), 550, 0, 100, 100, 2, -1*dir, true));
+						}
+						if(randomnum==1)
+						{
+							dir=-1;
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), -100, 0, 100, 100, 2, -1*dir, true));
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), 550, 0, 100, 100, 2, dir, true));
+						}
+					}
+				}
+				if((coincount==35)&&(coins.length==0))
+				{
+					level7=false;
+					level8=true;
+				}
+				//level8
+				if(level8)
+				{
+					if((coincount<40)&&(timing%120==0)&&!end)
+					{
+						coincount++;
+						coins.push(new Coin(coin, parseInt(Math.random()*(canvas.width-42)), parseInt(Math.random()*(canvas.height-42)), 0, 42, 42));
+					}
+					if(timing%210==0)
+					{
+						randomnum2 = Math.floor(Math.random(0,1)*2);
+						if(randomnum2==0)
+						{
+							randomnum = Math.floor(Math.random(0,1)*2);
+							if(randomnum==0)
+							{
+								dir=1;
+								randomnum3 = Math.floor(Math.random(0,1)*200);
+								enemies.push(new Enemy(hoarde, randomnum3, -100, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 100, -100, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 200, -100, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, 1000-randomnum3-100, -100, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, 1000-randomnum3-200, -100, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, 1000-randomnum3-300, -100, 0, 100, 100, 3, dir, true));
+							}
+							if(randomnum==1)
+							{
+								dir=-1;
+								randomnum3 = Math.floor(Math.random(0,1)*200);
+								enemies.push(new Enemy(hoarde, randomnum3, 550, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 100, 550, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 200, 550, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, 1000-randomnum3-100, 550, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, 1000-randomnum3-200, 550, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, 1000-randomnum3-300, 550, 0, 100, 100, 3, dir, true));
+							}
+						}
+						if(randomnum2==1)
+						{
+							randomnum = Math.floor(Math.random(0,1)*2);
+							if(randomnum==0)
+							{
+								dir=1;
+								randomnum3 = Math.floor(Math.random(0,1)*300);
+								enemies.push(new Enemy(hoarde, randomnum3, -100, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 100, -100, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 200, -100, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 300, -100, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 400, -100, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 500, -100, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 600, -100, 0, 100, 100, 3, dir, true));
+							}
+							if(randomnum==1)
+							{
+								dir=-1;
+								randomnum3 = Math.floor(Math.random(0,1)*300);
+								enemies.push(new Enemy(hoarde, randomnum3, 550, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 100, 550, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 200, 550, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 300, 550, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 400, 550, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 500, 550, 0, 100, 100, 3, dir, true));
+								enemies.push(new Enemy(hoarde, randomnum3 + 600, 550, 0, 100, 100, 3, dir, true));
+							}
+						}
+					}
+					if((timing+100)%210==0)
+					{
+						randomnum = Math.floor(Math.random(0,1)*2);
+						if(randomnum==0)
+						{
+							dir=1;
+							enemies.push(new Enemy(tracker, playerX-25, -100, 0, 100, 100, 5, dir, true));
+						}
+						if(randomnum==1)
+						{
+							dir=-1;
+							enemies.push(new Enemy(tracker, playerX-25, 550, 0, 100, 100, 5, dir, true));
+						}
+					}
+					if(timing%100==0)
+					{
+						randomnum = Math.floor(Math.random(0,1)*2);
+						if(randomnum==0)
+						{
+							dir=1;
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), -100, 0, 100, 100, 4, dir, true));
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), 550, 0, 100, 100, 4, -1*dir, true));
+						}
+						if(randomnum==1)
+						{
+							dir=-1;
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), -100, 0, 100, 100, 4, -1*dir, true));
+							enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), 550, 0, 100, 100, 4, dir, true));
+						}
+					}
+				}
+				//starting bossfight logic
+				if((coincount==40)&&(coins.length==0) && !bossfight && level8)
+				{
+					level8=false;
+					bossfight=true;
+					randomnum = Math.floor(Math.random(0,1)*7);
+					bosstiming=timing;
+					music.levelmusic.stop();
+					music.bossmusic.play();
+				}
+				//ending logic
+				if(bosslevel==5)
+				{
+					end=true;
+				}
+				//boss fight logic
+				if(bossfight && !end)
+				{
+					//boss attack 1 HUNTED
+					if (randomnum==0 && bosslevel<5)
+					{
+						if (bosstiming+300>timing)
+						{
+							if(bosstiming+100==timing)
+								announcers.hunted.play();
+							if (playerFrameY!=0 && timing%60==0)
+								playerFrameY--;
+						}
+						else if(bosstiming+1500>timing)
+						{
+							if(yesno==1)
+							{
+								dir=1;
+								enemies.push(new Enemy(tracker, playerX-25, -100, 0, 100, 100, 7, dir, true));
+								enemies.push(new Enemy(tracker, playerX-25, 550, 0, 100, 100, 7, -dir, true));
+							}
+							if((timing-bosstiming+1)%30==0)
+							{
+								yesno = yesno*-1;
+							}
+						}
+						else if(bosstiming+1500==timing)
+						{
+							randomnum = Math.floor(Math.random(0,1)*7);
+							bosstiming=timing;
+							bosslevel++;
+						}
+					}
+					//boss attack 2 SURROUNDED
+					if (randomnum==1 && bosslevel<5)
+					{
+						if (bosstiming+300>timing)
+						{
+							if(bosstiming+100==timing)
+								announcers.surrounded.play();
+							if (playerFrameY!=0 && timing%60==0)
+								playerFrameY--;
+						}
+						else if(bosstiming+1800>timing)
+						{
+							if(timing%20==0)
+							{
+								randomnum2 = Math.floor(Math.random(0,1)*4);
+								if(randomnum2==0)//spawn top
+								{
+									dir=1;
+									enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), -100, 0, 100, 100, 5, dir, true));
+								}
+								if(randomnum2==1)//spawn bottom
+								{
+									dir=-1;
+									enemies.push(new Enemy(enemy, parseInt(Math.random()*(canvas.width-100)), 550, 0, 100, 100, 5, dir, true));
+								}
+								if(randomnum2==2)//spawn left
+								{
+									dir=1;
+									enemies.push(new Enemy(enemy, -100, parseInt(Math.random()*(canvas.height-100)), 0, 100, 100, 5, dir, false));
+								}
+								if(randomnum2==3)//spawn right
+								{
+									dir=-1;
+									enemies.push(new Enemy(enemy, 1000, parseInt(Math.random()*(canvas.height-100)), 0, 100, 100, 5, dir, false));
+								}
+							}
+						}
+						else if(bosstiming+1800==timing)
+						{
+							randomnum = Math.floor(Math.random(0,1)*7);
+							bosstiming=timing;
+							bosslevel++;
+						}
+					}
+					//boss attack 3 BLUE-RAYED
+					if (randomnum==2 && bosslevel<5)
+					{
+						if (bosstiming+300>timing)
+						{
+							if(bosstiming+80==timing)
+								announcers.bluerayed.play();
+							if (playerFrameY!=0 && timing%60==0)
+								playerFrameY--;	
+						}
+						else if(bosstiming+1800>timing)
+						{
+							if(timing%65==0)
+							{
+								randomnum2 = Math.floor(Math.random(0,1)*4);//spawn location
+								randomnum3 = Math.floor(Math.random(0,1)*2);//xdir or ydir
+								if(randomnum3==0)
+									randomnum3 = -1;
+								randomnum4 = Math.floor(Math.random(0,1)*2);//speed
+								randomnum4 = randomnum4 + 3;
+								if(randomnum2==0)//spawn top
+								{
+									bouncers.push(new Bouncer(bouncer, parseInt(Math.random()*(canvas.width-100)), -100, 0, 100, 100, randomnum4, randomnum3, 1, 0));
+								}
+								if(randomnum2==1)//spawn bottom
+								{
+									bouncers.push(new Bouncer(bouncer, parseInt(Math.random()*(canvas.width-100)), 550, 0, 100, 100, randomnum4, randomnum3, -1, 0));
+								}
+								if(randomnum2==2)//spawn left
+								{
+									bouncers.push(new Bouncer(bouncer, -100, parseInt(Math.random()*(canvas.height-100)), 0, 100, 100, randomnum4, 1, randomnum3, 0));
+								}
+								if(randomnum2==3)//spawn right
+								{
+									bouncers.push(new Bouncer(bouncer, 1000, parseInt(Math.random()*(canvas.height-100)), 0, 100, 100, randomnum4, -1, randomnum3, 0));
+								}
+							}
+						}
+						else if(bosstiming+1800==timing)
+						{
+							randomnum = Math.floor(Math.random(0,1)*7);
+							bosstiming=timing;
+							bosslevel++;
+							bouncers.forEach(function(bouncer){
+								bouncer.numbounces = 4;
+							});
+						}
+					}
+					//boss attack 4 FRACTURED
+					if (randomnum==3 && bosslevel<5)
+					{
+						if (bosstiming+300>timing)
+						{
+							if(bosstiming+120==timing)
+								announcers.fractured.play();
+							if (playerFrameY!=0 && timing%60==0)
+								playerFrameY--;
+						}
+						else if(bosstiming+1800>timing)
+						{
+							if(timing%30==0)
+							{
+								randomnum2 = Math.floor(Math.random(0,1)*2);
+								if(randomnum2==0)
+								{
+									splitters.push(new Splitter(splitter, parseInt(Math.random()*(canvas.width-100)), -100, 0, 100, 100, 4, 1, 0, 0));
+								}
+								if(randomnum2==1)
+								{
+									splitters.push(new Splitter(splitter, parseInt(Math.random()*(canvas.width-100)), 550, 0, 100, 100, 4, -1, 0, 0));
+								}
+							}
+							splitters.forEach(function(splitter){
+								randomnum3 = Math.floor(Math.random(0,1)*120);
+								if(randomnum3==50 && splitter.numsplits==0)
+								{
+									splitter.numsplits=1;
+								}
+							});
+							for(var x=0; x<splitters.length; x++)
+							{
+								if(splitters[x].numsplits==1 && splitters[x].delay==90)
+								{
+									splitters.push(new Splitter(splitter, splitters[x].x + 100, splitters[x].y, 0, 100, 100, 6, splitters[x].dir, 1, 91));
+									splitters.push(new Splitter(splitter, splitters[x].x - 100, splitters[x].y, 0, 100, 100, 6, splitters[x].dir, 1, 91));
+									splitters.splice(x,1);
+								}
+							}
+						}
+						else if(bosstiming+1800==timing)
+						{
+							randomnum = Math.floor(Math.random(0,1)*7);
+							bosstiming=timing;
+							bosslevel++;
+						}
+					}
+					//boss attack 5 LABYRINTH
+					if (randomnum==4 && bosslevel<5)
+					{
+						if (bosstiming+300>timing)
+						{
+							if(bosstiming+100==timing)
+								announcers.labyrinth.play();
+							if (playerFrameY!=0 && timing%60==0)
+								playerFrameY--;
+						}
+						else if(bosstiming+2400>timing)
+						{
+							if(bosstiming+300==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+400==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+500==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+600==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+700==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+800==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+900==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+1000==timing)
+							{
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+1100==timing)
+							{
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+1200==timing)
+							{
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+1300==timing)
+							{
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+1400==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+1500==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+1600==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+1700==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+1800==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+1900==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+2000==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+2100==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+							if(bosstiming+2200==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 1, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 1, 1, true));
+							}
+						}
+						else if(bosstiming+2760==timing)
+						{
+							randomnum = Math.floor(Math.random(0,1)*7);
+							bosstiming=timing;
+							bosslevel++;
+						}
+					}
+					//boss attack 6 DISSECTED
+					if (randomnum==5 && bosslevel<5)
+					{
+						if (bosstiming+300>timing)
+						{
+							if(bosstiming+100==timing)
+								announcers.dissected.play();
+							if (playerFrameY!=0 && timing%60==0)
+								playerFrameY--;
+						}
+						else if (bosstiming+1800>timing)
+						{
+							if(bosstiming+300==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+350==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+400==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+450==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+500==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+550==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+600==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+650==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+850==timing)
+							{
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+900==timing)
+							{
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+950==timing)
+							{
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1000==timing)
+							{
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1050==timing)
+							{
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1100==timing)
+							{
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1150==timing)
+							{
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1200==timing)
+							{
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1400==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1450==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1500==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1550==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1600==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1650==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1700==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1750==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+300==timing)
+								wheretospawn='right';
+							if(bosstiming+850==timing)
+								wheretospawn='left';
+							if(bosstiming+1400==timing)
+								wheretospawn='middle';
+							if(timing%50==0)
+							{
+								if(wheretospawn=='right')
+								{
+									spawnlocation = parseInt(Math.random()*(canvas.width-600)) + 500;
+								}
+								if(wheretospawn=='left')
+								{
+									spawnlocation = parseInt(Math.random()*(canvas.width-600));
+								}
+								if(wheretospawn=='middle')
+								{
+									spawnlocation = parseInt(Math.random()*(canvas.width-500)) + 200;
+								}
+								randomnum2 = Math.floor(Math.random(0,1)*4);
+								if(randomnum2 == 0)//trackers
+								{
+									randomnum3 = Math.floor(Math.random(0,1)*2);
+									if(randomnum3==0)
+									{
+										dir=1;
+										enemies.push(new Enemy(tracker, playerX-25, -100, 0, 100, 100, 4, dir, true));
+									}
+									if(randomnum3==1)
+									{
+										dir=-1;
+										enemies.push(new Enemy(tracker, playerX-25, 550, 0, 100, 100, 4, dir, true));
+									}
+								}
+								if(randomnum2 == 1)//regulars
+								{
+									randomnum3 = Math.floor(Math.random(0,1)*2);
+									if(randomnum3==0)
+									{
+										dir=1;
+										enemies.push(new Enemy(enemy, spawnlocation, -100, 0, 100, 100, 2, dir, true));
+									}
+									if(randomnum3==1)
+									{
+										dir=-1;
+										enemies.push(new Enemy(enemy, spawnlocation, -100, 0, 100, 100, 2, -1*dir, true));
+									}
+								}
+								if(randomnum2 == 2)//bouncers
+								{
+									randomnum3 = Math.floor(Math.random(0,1)*4);//spawn location
+									randomnum4 = Math.floor(Math.random(0,1)*2);//xdir or ydir
+									if(randomnum4==0)
+										randomnum4 = -1;
+									if(randomnum3==0)//spawn top
+									{
+										bouncers.push(new Bouncer(bouncer, parseInt(Math.random()*(canvas.width-100)), -100, 0, 100, 100, 5, randomnum4, 1, 0));
+									}
+									if(randomnum3==1)//spawn bottom
+									{
+										bouncers.push(new Bouncer(bouncer, parseInt(Math.random()*(canvas.width-100)), 550, 0, 100, 100, 5, randomnum4, -1, 0));
+									}
+									if(randomnum3==2)//spawn left
+									{
+										bouncers.push(new Bouncer(bouncer, -100, parseInt(Math.random()*(canvas.height-100)), 0, 100, 100, 5, 1, randomnum4, 0));
+									}
+									if(randomnum3==3)//spawn right
+									{
+										bouncers.push(new Bouncer(bouncer, 1000, parseInt(Math.random()*(canvas.height-100)), 0, 100, 100, 5, -1, randomnum4, 0));
+									}
+								}
+								if(randomnum2 == 3)//splitters
+								{
+									randomnum3 = Math.floor(Math.random(0,1)*2);
+									if(randomnum3==0)
+									{
+										splitters.push(new Splitter(splitter, spawnlocation, -100, 0, 100, 100, 4, 1, 0, 0));
+									}
+									if(randomnum3==1)
+									{
+										splitters.push(new Splitter(splitter, spawnlocation, 550, 0, 100, 100, 4, -1, 0, 0));
+									}
+								}
+							}
+							splitters.forEach(function(splitter){
+								randomnum3 = Math.floor(Math.random(0,1)*120);
+								if(randomnum3==50 && splitter.numsplits==0)
+								{
+									splitter.numsplits=1;
+								}
+							});
+							for(var x=0; x<splitters.length; x++)
+							{
+								if(splitters[x].numsplits==1 && splitters[x].delay==90)
+								{
+									splitters.push(new Splitter(splitter, splitters[x].x + 100, splitters[x].y, 0, 100, 100, 6, splitters[x].dir, 1, 91));
+									splitters.push(new Splitter(splitter, splitters[x].x - 100, splitters[x].y, 0, 100, 100, 6, splitters[x].dir, 1, 91));
+									splitters.splice(x,1);
+								}
+							}
+						}
+						else if(bosstiming+1950==timing)
+						{
+							randomnum = Math.floor(Math.random(0,1)*7);
+							bosstiming=timing;
+							bouncers.forEach(function(bouncer){
+								bouncer.numbounces = 4;
+							});
+							bosslevel++;
+						}
+					}
+					//boss attack 7 IMPRISONED
+					if (randomnum==6 && bosslevel<5)
+					{
+						if(bosstiming+300>timing)
+						{
+							if(bosstiming+100==timing)
+								announcers.imprisoned.play();
+							if (playerFrameY!=0 && timing%60==0)
+								playerFrameY--;
+						}
+						else if(bosstiming+1800>timing)
+						{
+							if(bosstiming+300==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+350==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+400==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+450==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+500==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+550==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+600==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+650==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+700==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+750==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+800==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+850==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+900==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+950==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1050==timing)
+							{
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1150==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1250==timing)
+							{
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1350==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1450==timing)
+							{
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1550==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1650==timing)
+							{
+								enemies.push(new Enemy(hoarde, 100, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 300, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 500, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 700, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 900, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(bosstiming+1750==timing)
+							{
+								enemies.push(new Enemy(hoarde, 0, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 200, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 400, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 600, -100, 0, 100, 100, 2, 1, true));
+								enemies.push(new Enemy(hoarde, 800, -100, 0, 100, 100, 2, 1, true));
+							}
+							if(timing%100==0)
+							{
+								randomnum2 = Math.floor(Math.random(0,1)*2);
+								if(randomnum2==0)
+								{
+									dir=1;
+									enemies.push(new Enemy(tracker, playerX-25, -100, 0, 100, 100, 4, dir, true));
+								}
+								if(randomnum2==1)
+								{
+									dir=-1;
+									enemies.push(new Enemy(tracker, playerX-25, 550, 0, 100, 100, 4, dir, true));
+								}
+							}
+						}
+						else if(bosstiming+1980==timing)
+						{
+							randomnum = Math.floor(Math.random(0,1)*7);
+							bosstiming=timing;
+							bosslevel++;
+						}
+					}
+				}
+				draw();
+				requestAnimationFrame(update);
+			}
+			function draw()
+			{
+				// now = Date.now();
+    			// delta = now - then;
+				// if (delta > interval) {
+				ctx.clearRect(0,0, canvas.width, canvas.height);
+				ctx.drawImage(background, 0, 0);
+				if(!end)
+				{
+					ctx.drawImage(player, playerFrameW*playerFrameX, playerFrameH*playerFrameY, playerFrameW, playerFrameH, playerX, playerY, 50, 50);
+					enemies.forEach(function(enemy){
+						enemy.draw(ctx);
+					});
+					bouncers.forEach(function(bouncer){
+						bouncer.draw(ctx);
+					});
+					splitters.forEach(function(splitter){
+						splitter.draw(ctx);
+					});
+					hearts.forEach(function(heart){
+						heart.draw(ctx);
+					});
+					coins.forEach(function(coin){
+						coin.draw(ctx);
+					});
+				}
+				//level numbers
+				ctx.beginPath();
+					ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+					ctx.font="40px Arial";
+					if(level1)
+						ctx.fillText("1",10,40);
+					if(level2)
+						ctx.fillText("2",10,40);
+					if(level3)
+						ctx.fillText("3",10,40);
+					if(level4)
+						ctx.fillText("4",10,40);
+					if(level5)
+						ctx.fillText("5",10,40);
+					if(level6)
+						ctx.fillText("6",10,40);
+					if(level7)
+						ctx.fillText("7",10,40);
+					if(level8)
+						ctx.fillText("8",10,40);
+					ctx.fill();
+				ctx.closePath();
+				//boss fight intros
+				if(bossfight && bosstiming+300>timing && randomnum==0)
+				{
+					ctx.beginPath();
+						ctx.fillStyle = "red";
+						ctx.font="180px cursive";
+						ctx.fillText("HUNTED",120,320);
+						ctx.fill();
+					ctx.closePath();
+				}
+				if(bossfight && bosstiming+300>timing && randomnum==1)
+				{
+					ctx.beginPath();
+						ctx.fillStyle = "red";
+						ctx.font="140px cursive";
+						ctx.fillText("SURROUNDED",2,330);
+						ctx.fill();
+					ctx.closePath();
+				}
+				if(bossfight && bosstiming+300>timing && randomnum==2)
+				{
+					ctx.beginPath();
+						ctx.fillStyle = "red";
+						ctx.font="157px cursive";
+						ctx.fillText("BLUE-RAYED",2,330);
+						ctx.fill();
+					ctx.closePath();
+				}
+				if(bossfight && bosstiming+300>timing && randomnum==3)
+				{
+					ctx.beginPath();
+						ctx.fillStyle = "red";
+						ctx.font="165px cursive";
+						ctx.fillText("FRACTURED",10,330);
+						ctx.fill();
+					ctx.closePath();
+				}
+				if(bossfight && bosstiming+300>timing && randomnum==4)
+				{
+					ctx.beginPath();
+						ctx.fillStyle = "red";
+						ctx.font="165px cursive";
+						ctx.fillText("LABYRINTH",10,330);
+						ctx.fill();
+					ctx.closePath();
+				}
+				if(bossfight && bosstiming+300>timing && randomnum==5)
+				{
+					ctx.beginPath();
+						ctx.fillStyle = "red";
+						ctx.font="165px cursive";
+						ctx.fillText("DISSECTED",10,330);
+						ctx.fill();
+					ctx.closePath();
+				}
+				if(bossfight && bosstiming+300>timing && randomnum==6)
+				{
+					ctx.beginPath();
+						ctx.fillStyle = "red";
+						ctx.font="147px cursive";
+						ctx.fillText("IMPRISONED",2,330);
+						ctx.fill();
+					ctx.closePath();
+				}
+				if(bossfight)
+				{
+					ctx.beginPath();
+						ctx.fillStyle = "red";
+						ctx.rect(785,10,200,25);
+						ctx.fill();
+						ctx.lineWidth=5;
+						ctx.strokeStyle="black";
+						ctx.stroke();
+					ctx.closePath();
+					ctx.beginPath();
+						ctx.fillStyle = "green";
+						ctx.rect(785+(bosslevel*40),10,200-(bosslevel*40),25);
+						ctx.fill();
+						ctx.lineWidth=5;
+						ctx.strokeStyle="black";
+						ctx.stroke();
+					ctx.closePath();
+				}
+				if((playerIFrames>0 && playerIFrames<20) || (playerIFrames>40 && playerIFrames<60) || (playerIFrames>80 && playerIFrames<100))
+				{
+					player.src = "./gameImagesMaster/invertedSprites.png";
+				}
+				else
+				{
+					player.src = "./gameImagesMaster/playerSprites.png";
+				}
+				if(end)
+				{
+					//location.href='gameOver.html?score='+timing;
+					if(playerFrameY==3)
+						location.href='lose.html';
+					else
+						location.href='win.html';
+				}
+				// then = now - (delta % interval);
+				// }
+			}
+			//handling key presses
+			function keyDownHandler(e)
+			{
+				switch(e.keyCode)
+				{
+					case 37: 
+						leftKey=true; 
+						break;
+					case 39: 
+						rightKey=true; 
+						break;
+					case 40:
+						downKey=true;
+						break;
+					case 38:
+						upKey=true;
+						break;
+					case 65: 
+						aKey=true; 
+						break;
+					case 68: 
+						dKey=true; 
+						break;
+					case 83:
+						sKey=true;
+						break;
+					case 87:
+						wKey=true;
+						break;
+				}
+			}
+			//handling key releases
+			function keyUpHandler(e)
+			{
+				switch(e.keyCode)
+				{
+					case 37: 
+						leftKey=false; 
+						break;
+					case 39: 
+						rightKey=false; 
+						break;
+					case 40:
+						downKey=false;
+						break;
+					case 38:
+						upKey=false;
+						break;
+					case 65: 
+						aKey=false; 
+						break;
+					case 68: 
+						dKey=false; 
+						break;
+					case 83:
+						sKey=false;
+						break;
+					case 87:
+						wKey=false;
+						break;
+				}
+			}
+			
+			//new with version 2.0
+			//1) added a main menu screen
+			//2) added a rules screen
+			//3) added a game over screen
+			//4) added logic to not allow character to go out bounds when moving and dashing
+			//5) added tracker enemies with different color schemes to let player know these are tracker enemies
+			//6) added a healing system, so if the player gets hit, they can try to catch a heart to restore health
+			//8) changed player speeds to give incentive to stay full health
+			//7) added hoard enemies, with different color schemes
+			//8) added 3 new levels (8,9,10)
+
+			// new with version 3.0
+			// 1) revamped rules screen
+			// 2) added boss fight logic
+			// 3) changed playerSpeed, while green speed=4, while red speed=5, while orange speed=3
+			// 4) sped up coin spawns across all levels
+			// 5) made early levels slightly harder and later levels slightly easier
+			// 6) adjusted dash mechanic so you can dash quicker and when close to walls
+			// 7) added bouncer enemies (blue) with bouncers.png and Bouncer.js
+			// 8) added splitter enemies (purple) with splitters.png and Splitter.js
+			// 9) added soundtrack for first 10 levels
+			// 10) added soundtrack for boss fight
+			// 11) added cod zombies style announcer for boss attacks
+			// 12) added boss attack HUNTED
+			// 13) added boss attack SURROUNDED
+			// 14) added boss attack BLUE-RAYED
+			// 15) added boss attack FRACTURED
+			// 16) added boss attack LABYRINTH
+			// 17) added boss attack SURROUNDED
+			// 18) added boss attack IMPRISONED
+
+			// new with version 4.0
+			// 1) deleted levels 1 and 2 and sped up coin spawns
+			// 2) dash is now 20 pixels longer
+			// 3) fully heal player before every boss wave
+			// 4) created gameMaster folders so everything is organized for github commit
+			// 5) added health bar for boss fight
+			// 6) change tracker and hoarde sprites to be less annoying
+			// 7) add invincibility frames
+			// 8) added inverse splitters to let the player know when the splitters are about to split
+		</script>
+		<style>
+			canvas{
+				border:3px solid black;
+			}
+		</style>
+	</head>
+	<body onload='initialize();'>
+		<canvas id='project3' width='1000px' height='550px'></canvas>
+	</body>
+</html>

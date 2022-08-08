@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			#intro{
+				width:1000px;
+				height:550px;
+				background-image:url("./gameImagesMaster/background.png");
+				background-size:cover;
+			}
+			h2{
+				text-align:center;
+				color:White;
+				padding-top:20px;
+				padding-bottom:20px;
+				font-size:80px;
+				border-bottom: 3px double;
+			}
+			button{
+				background-color:white;
+				color:black;
+				width:300px;
+				height:90px;
+				border-radius:10px;
+			}
+			button:hover{
+				background-color:#CCCCCC;
+				color:#333333;
+			}
+			#controls{
+				text-align:center;
+			}
+			
+		</style>
+	</head>
+	<body>
+		<div id='intro'>
+			<h2>Colin's Game</h2>
+			<div id='controls'>
+				<button onclick='play()'>PLAY</button>
+				<button onclick='readRules()'>RULES</button>
+			</div>
+		</div>
+		<script>
+			function play()
+			{
+				location.href='game.html';
+			}
+			function readRules()
+			{
+				location.href='rules.html';
+			}
+		</script>
+	</body>
+</html>
